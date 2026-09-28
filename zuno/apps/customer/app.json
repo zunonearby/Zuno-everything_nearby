@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "ZUNO",
+    "slug": "zuno-customer",
+    "scheme": "zuno",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F8FAF6"
+    },
+    "plugins": ["expo-router"]
+  }
+}

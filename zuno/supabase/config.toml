@@ -1,0 +1,9 @@
+# Supabase local dev config. Populate via `supabase init` / `supabase link`
+# once the project is created — kept minimal here.
+project_id = "zuno"
+
+[db]
+port = 54322
+
+[api]
+port = 54321

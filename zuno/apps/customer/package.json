@@ -1,0 +1,31 @@
+{
+  "name": "@zuno/customer",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "~51.0.0",
+    "expo-router": "~3.5.0",
+    "react": "18.2.0",
+    "react-native": "0.74.0",
+    "zustand": "^4.5.0",
+    "@tanstack/react-query": "^5.51.0",
+    "zod": "^3.23.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "@zuno/types": "workspace:*",
+    "@zuno/validation": "workspace:*",
+    "@zuno/config": "workspace:*",
+    "@zuno/utils": "workspace:*",
+    "@zuno/analytics": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
