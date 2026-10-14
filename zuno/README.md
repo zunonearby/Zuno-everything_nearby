@@ -2,137 +2,169 @@
 
 **Everything nearby.**
 
-ZUNO is a hyperlocal commerce platform. It launches with grocery and
-fruits/vegetables in a tightly controlled local area, but the
-architecture is built to expand into a much broader set of local
-verticals (fast food, restaurants, bakery, dairy, pharmacy, household,
-personal care, local services) and locations without structural rewrites.
+ZUNO is a modern hyperlocal commerce platform designed to bridge neighborhood families with trusted local shopkeepers. It connects customers directly to nearby verified inventories (grocery, fruits & vegetables, daily essentials), backed by a dedicated local delivery fleet.
 
-## Product vision
+---
 
-Everything a neighborhood needs, from nearby shops, delivered — starting
-narrow and deep in one launch area, expanding by category and geography
-once the core loop (shop -> customer -> delivery) works.
+## 🌟 Product Vision
 
-## Four application surfaces
+Everything a neighborhood needs, from nearby shops, delivered fast and fresh. ZUNO preserves community-first economics by empowering local merchants rather than replacing them with impersonal dark stores.
 
-This is one platform, but **four separate applications**, each with its
-own users, permissions, UX, and security boundary — not four screens of
-one app.
+Currently operational in **Renukoot Central (PIN 231217)**, Uttar Pradesh, with an architecture designed to scale seamlessly across categories and geographies.
 
-| App          | Users              | Stack                | Path                |
-|--------------|--------------------|------------------------|-----------------------|
-| **Customer** | Customers          | Expo / React Native   | `apps/customer`      |
-| **Shop**     | Shopkeepers        | Next.js               | `apps/shop`          |
-| **Delivery** | Delivery partners  | Expo / React Native   | `apps/delivery`      |
-| **Super Admin** | Platform owner/ops | Next.js            | `apps/super-admin`   |
+---
 
-See `docs/architecture.md` for the full picture.
+## 📱 Five Application Surfaces
 
-## Technology stack
+ZUNO is built as a unified monorepo containing **five distinct applications**, each engineered for its specific user role, UX requirements, and security boundaries:
 
-- **Monorepo**: pnpm workspaces
-- **Mobile** (customer, delivery): Expo, React Native, TypeScript, Expo Router, Zustand, TanStack Query, Zod
-- **Web** (shop, super-admin): Next.js, TypeScript, Tailwind CSS, TanStack Query, Zod
-- **Backend**: Supabase (Auth, PostgreSQL, Storage, Realtime)
-- **Analytics**: PostHog (behavioral only — see `docs/analytics.md`)
-- **Payments**: Razorpay (COD / UPI / Online), boundary prepared, not yet integrated
-- **Maps**: Google Maps Platform, boundary prepared, not yet integrated
+| Application | Role / Audience | Tech Stack | Port / Path | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Public Website (`@zuno/web`)** | Public Visitors & Customers | Next.js 14, Tailwind CSS, Three.js, React Three Fiber | `localhost:3002`<br>`apps/web` | Public brand storefront, 3D interactive hero, 7-category showcase, live PIN 231217 coverage checker, FAQs, and app download guide. |
+| **Customer App (`@zuno/customer`)** | End Customers | Expo, React Native, TypeScript, Expo Router, Zustand | Expo Dev Server<br>`apps/customer` | Store discovery, real-time product catalogs, cart, checkout, order tracking, address & profile management. |
+| **Delivery App (`@zuno/delivery`)** | Delivery Partners | Expo, React Native, TypeScript, Expo Router, Zustand | Expo Dev Server<br>`apps/delivery` | Partner shift toggling, delivery task queue, step-by-step pickup/delivery flow, and secure OTP dropoff verification. |
+| **Shop Dashboard (`@zuno/shop`)** | Neighborhood Merchants | Next.js, TypeScript, Tailwind CSS, TanStack Query | `localhost:3001`<br>`apps/shop` | Storefront controls, product catalog & stock management, order acceptance, packing workflow, and sales metrics. |
+| **Super Admin (`@zuno/super-admin`)** | Platform Operations | Next.js, TypeScript, Tailwind CSS, TanStack Query | `localhost:3000`<br>`apps/super-admin` | Platform-wide oversight: shop onboarding, delivery coordination, platform analytics, system logs, and security controls. |
 
-## Repository structure
+---
+
+## 🛠️ Technology Stack & Architecture
+
+### Monorepo Architecture
+- **Package Manager:** `pnpm` workspaces (`pnpm-workspace.yaml`)
+- **Language:** TypeScript 5.5+ throughout all mobile apps, web apps, and packages
+- **Code Standards:** Shared ESLint, Prettier, and TypeScript configurations
+
+### Shared Packages (`packages/`)
+- **`@zuno/config`**: Centralized source of truth for brand tokens (`#0F5D3A`, `#22A06B`, `#A7D56B`), category palettes, and environment contracts.
+- **`@zuno/types`**: Canonical TypeScript interfaces for domain entities (`User`, `Shop`, `Product`, `Order`, `Delivery`, `ServiceArea`, `Location`).
+- **`@zuno/validation`**: Shared Zod schemas ensuring runtime safety across API boundaries (PIN code, auth credentials, checkout payload).
+- **`@zuno/utils`**: Framework-agnostic utility functions (currency formatting, distance calculation, string helpers).
+- **`@zuno/ui`**: Shared design primitives and components for web applications.
+- **`@zuno/analytics`**: Strongly-typed PostHog analytics wrapper for client and server telemetry.
+
+### Backend & Cloud Services
+- **Database & Auth:** Supabase (PostgreSQL 15+, Row-Level Security, Realtime subscriptions, Auth)
+- **Security:** Strict PostgreSQL Row Level Security (RLS) policies on all transactional tables. Client apps are never trusted for pricing or order totals.
+- **Analytics:** PostHog (privacy-focused behavioral tracking)
+- **Payments:** Razorpay integration boundary (COD, UPI, Netbanking)
+- **Location:** Google Maps Platform boundary + local postal PIN validation
+
+---
+
+## 📂 Repository Directory Structure
 
 ```
 zuno/
 ├── apps/
-│   ├── customer/       Customer mobile app (Expo)
-│   ├── shop/            Shopkeeper dashboard (Next.js)
-│   ├── delivery/        Delivery partner app (Expo)
-│   └── super-admin/     Platform control center (Next.js)
+│   ├── web/              # Public marketing website (Next.js 14)
+│   ├── customer/         # Customer mobile application (Expo / React Native)
+│   ├── delivery/         # Delivery partner mobile app (Expo / React Native)
+│   ├── shop/             # Shopkeeper merchant dashboard (Next.js)
+│   └── super-admin/      # Operations control center (Next.js)
 ├── packages/
-│   ├── ui/               Shared UI primitives (web apps)
-│   ├── types/            Canonical domain types
-│   ├── validation/       Shared Zod schemas
-│   ├── config/           Brand tokens, category colors, env contract
-│   ├── utils/            Small framework-agnostic helpers
-│   └── analytics/        Typed PostHog wrapper
+│   ├── config/           # Brand tokens, colors, constants
+│   ├── types/            # Domain interfaces & TypeScript types
+│   ├── validation/       # Zod validation schemas
+│   ├── utils/            # Helper functions & formatters
+│   ├── ui/               # Shared web UI components
+│   └── analytics/        # PostHog telemetry wrapper
 ├── supabase/
-│   ├── migrations/       SQL schema migrations
-│   ├── functions/        Edge Functions (server-only logic)
-│   ├── seed/              Development-only seed data
-│   └── tests/             Database tests
-├── assets/brand/          Logo + brand asset source of truth
-├── docs/                  Architecture, database, security, roadmap, ...
-└── scripts/               Repo-level scripts
+│   ├── migrations/       # Incremental SQL migrations & RLS policies
+│   └── seed/             # Development and test seed fixtures
+├── assets/brand/         # Official brand logos, vectors & app icons
+├── docs/                 # Architecture, security, database & API documentation
+├── package.json          # Workspace root scripts
+└── pnpm-workspace.yaml   # Monorepo workspace configuration
 ```
 
-## Customer app
+---
 
-Discover nearby shops, browse categories/products, cart, checkout, track
-orders, manage profile/addresses. See `apps/customer`.
+## 🚀 Getting Started
 
-## Shopkeeper dashboard
+### Prerequisites
+- **Node.js**: `>= 18.18.0` (Node 20+ recommended)
+- **pnpm**: `>= 8.0.0`
+- **Expo Go** or an Android/iOS emulator (for mobile testing)
+- **Supabase CLI** (for local migrations and database management)
 
-Manage shop, products, pricing, inventory; accept/manage orders; basic
-sales analytics. See `apps/shop`.
+### 1. Installation
+Clone the repository and install all workspace dependencies:
+```bash
+git clone https://github.com/zunonearby/Zuno-everything_nearby.git
+cd zuno
+pnpm install
+```
 
-## Delivery app
+### 2. Environment Setup
+Copy the sample environment file and configure your credentials:
+```bash
+cp .env.example .env
+```
+Key required environment variables:
+- `NEXT_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_URL`: Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`: Supabase anonymous public key
 
-Login, availability, assigned deliveries, pickup/delivery confirmation
-flow. GPS tracking, route optimization, and automatic dispatch are
-explicitly deferred — see `docs/delivery-architecture.md`.
+### 3. Running Applications Locally
 
-## Super Admin
-
-Platform-wide visibility and control over customers, shops, products,
-orders, deliveries, payments, and analytics, plus an administrative
-activity log. See `docs/roles-and-permissions.md` and `docs/analytics.md`.
-
-## Supabase / PostgreSQL
-
-Single backend shared by all four apps. PostgreSQL is the operational
-source of truth for everything transactional. See `docs/database.md`.
-
-## Authentication & security
-
-One Supabase Auth instance, role-based authorization enforced primarily
-via PostgreSQL RLS. The client is never trusted for price, totals, or
-status fields. See `docs/security.md`.
-
-## Local development
+You can launch apps independently using the workspace scripts:
 
 ```bash
-pnpm install
+# Public Website (localhost:3002)
+pnpm dev:web
 
-# run one app at a time
+# Customer Mobile App (Expo Metro bundler)
 pnpm dev:customer
-pnpm dev:shop
+
+# Delivery Partner Mobile App (Expo Metro bundler)
 pnpm dev:delivery
+
+# Shopkeeper Dashboard (localhost:3001)
+pnpm dev:shop
+
+# Super Admin Control Center (localhost:3000)
 pnpm dev:super-admin
 ```
 
-## Environment variables
-
-Copy `.env.example` to `.env` and fill in Supabase / Razorpay / Google
-Maps / PostHog credentials. Never commit real credentials. See the
-PUBLIC vs SERVER-ONLY notes inside the file.
-
-## Database setup
-
+### 4. Code Quality & Type Checking
+Run workspace-wide verification:
 ```bash
-# once a Supabase project exists and the CLI is linked
-supabase db push        # applies supabase/migrations/
+# Typecheck all apps and packages
+pnpm typecheck
+
+# Lint all files
+pnpm lint
+
+# Production build verification
+pnpm build
 ```
 
-See `docs/database.md` for schema details.
+---
 
-## Roadmap
+## 🎨 Brand Identity
 
-See `docs/development-roadmap.md` for the suggested build order from this
-foundation to a working MVP.
+| Token | Value | Visual | Usage |
+| :--- | :--- | :--- | :--- |
+| **Primary** | `#0F5D3A` | <div style="width:24px;height:24px;background:#0F5D3A;border-radius:4px;"></div> | Deep forest green — primary brand color, active highlights, key CTAs |
+| **Secondary** | `#22A06B` | <div style="width:24px;height:24px;background:#22A06B;border-radius:4px;"></div> | Vibrant supporting green — success states, live indicators |
+| **Accent** | `#A7D56B` | <div style="width:24px;height:24px;background:#A7D56B;border-radius:4px;"></div> | Fresh lime accent — contrast badges, highlights |
+| **Background** | `#F8FAF6` | <div style="width:24px;height:24px;background:#F8FAF6;border-radius:4px;"></div> | Warm off-white surface |
+| **Text** | `#17231D` | <div style="width:24px;height:24px;background:#17231D;border-radius:4px;"></div> | Primary high-contrast charcoal text |
 
-## Future expansion
+---
 
-The architecture is deliberately category-neutral and location-neutral:
-new verticals are new `categories` rows, not new tables; new launch areas
-are new `service_areas`, not new code paths. See `docs/architecture.md`
-and `docs/database.md`.
+## 📖 Key Documentation
+
+Detailed architectural and implementation guides can be found in the [`docs/`](./docs) directory:
+- [`docs/architecture.md`](./docs/architecture.md) — System boundaries and platform design
+- [`docs/database.md`](./docs/database.md) — PostgreSQL schema, entity relationships, and triggers
+- [`docs/security.md`](./docs/security.md) — Authentication models and Row-Level Security (RLS) policies
+- [`docs/brand.md`](./docs/brand.md) — Brand guidelines, typography, and color tokens
+- [`docs/delivery-architecture.md`](./docs/delivery-architecture.md) — Partner dispatch and delivery lifecycle
+- [`docs/development-roadmap.md`](./docs/development-roadmap.md) — Milestones and MVP roadmap
+
+---
+
+## 📄 License
+
+Proprietary — All rights reserved by **ZUNO Hyperlocal Commerce**.
