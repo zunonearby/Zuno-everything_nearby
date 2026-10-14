@@ -4,6 +4,13 @@
  */
 export const AnalyticsEvent = {
   APP_OPENED: "app_opened",
+  ONBOARDING_STARTED: "onboarding_started",
+  ONBOARDING_COMPLETED: "onboarding_completed",
+  LOCATION_SELECTION_COMPLETED: "location_selection_completed",
+  REGISTRATION_STARTED: "registration_started",
+  OTP_REQUESTED: "otp_requested",
+  OTP_VERIFICATION_SUCCEEDED: "otp_verification_succeeded",
+  PROFILE_COMPLETED: "profile_completed",
   SEARCH_PERFORMED: "search_performed",
   SHOP_VIEWED: "shop_viewed",
   PRODUCT_VIEWED: "product_viewed",

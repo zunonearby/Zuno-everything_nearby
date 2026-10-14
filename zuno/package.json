@@ -13,6 +13,7 @@
     "dev:shop": "pnpm --filter @zuno/shop dev",
     "dev:delivery": "pnpm --filter @zuno/delivery dev",
     "dev:super-admin": "pnpm --filter @zuno/super-admin dev",
+    "dev:web": "pnpm --filter @zuno/web dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",

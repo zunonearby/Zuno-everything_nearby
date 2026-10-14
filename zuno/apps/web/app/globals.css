@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #0F5D3A;
+  --secondary: #22A06B;
+  --accent: #A7D56B;
+  --background: #F8FAF6;
+  --surface: #FFFFFF;
+  --text: #17231D;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  background-color: var(--background);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  min-height: 100vh;
+}

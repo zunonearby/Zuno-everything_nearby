@@ -9,3 +9,5 @@ export * from "./delivery";
 export * from "./location";
 export * from "./notification";
 export * from "./audit";
+export * from "./consent";
+export * from "./auth";

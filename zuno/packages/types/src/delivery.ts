@@ -9,12 +9,18 @@ export const DeliveryStatus = {
 
 export type DeliveryStatus = (typeof DeliveryStatus)[keyof typeof DeliveryStatus];
 
+export type PartnerApprovalStatus = "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
+
 export interface DeliveryPartner {
   id: string;
   user_id: string;
   full_name: string;
   phone: string;
   is_available: boolean;
+  is_online?: boolean;
+  approval_status?: PartnerApprovalStatus;
+  vehicle_type?: string;
+  vehicle_number?: string;
   created_at: string;
 }
 

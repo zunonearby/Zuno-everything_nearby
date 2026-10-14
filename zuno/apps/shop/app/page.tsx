@@ -1,4 +1,5 @@
-// Redirects to /dashboard once auth middleware is implemented.
+import { redirect } from "next/navigation";
+
 export default function IndexPage() {
-  return null;
+  redirect("/dashboard");
 }
