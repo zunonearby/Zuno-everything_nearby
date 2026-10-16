@@ -118,8 +118,8 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-xs sm:text-sm text-[#4B5563] leading-relaxed">
               For questions regarding our privacy framework, please contact our administrative desk at{" "}
-              <a href="mailto:partners@zuno.com" className="font-bold text-[#0F5D3A] underline">
-                partners@zuno.com
+              <a href="mailto:zunonearby@gmail.com" className="font-bold text-[#0F5D3A] underline">
+                zunonearby@gmail.com
               </a>.
             </p>
           </div>

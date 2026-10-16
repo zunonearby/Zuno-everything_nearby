@@ -140,7 +140,7 @@ export function HeroVisual() {
       {/* Main Perspective Hero Visual Container */}
       <div
         ref={cardRef}
-        className="relative z-10 w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/3] rounded-2xl lg:rounded-3xl overflow-hidden bg-white shadow-xl shadow-green-950/5 border border-[#EAEFEA] transition-shadow duration-500 hover:shadow-2xl hover:shadow-green-950/10"
+        className="relative z-10 w-full aspect-[16/9] sm:aspect-[16/9] md:aspect-[16/9] lg:aspect-[4/3] rounded-2xl lg:rounded-3xl overflow-hidden bg-white shadow-xl shadow-green-950/5 border border-[#EAEFEA] transition-shadow duration-500 hover:shadow-2xl hover:shadow-green-950/10"
         style={{
           transformStyle: "preserve-3d",
           willChange: "transform",
@@ -188,25 +188,25 @@ export function HeroVisual() {
 
         {/* Floating Depth Badge 2 (Bottom Left): Fresh Harvest & Daily Staples */}
         <div
-          className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5 max-w-[calc(100%-2rem)] bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/80 shadow-md text-xs font-semibold text-[#17231D] flex items-center gap-2.5 transition-transform duration-300 pointer-events-none"
+          className="absolute bottom-2.5 left-2.5 sm:bottom-5 sm:left-5 max-w-[calc(100%-1.25rem)] sm:max-w-[calc(100%-2rem)] bg-white/95 backdrop-blur-md px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl border border-white/80 shadow-md text-xs font-semibold text-[#17231D] flex items-center gap-2 sm:gap-2.5 transition-transform duration-300 pointer-events-none"
           style={{
             transform: "translateZ(45px)",
           }}
         >
-          <div className="w-7 h-7 rounded-lg bg-[#EAF4E5] text-[#0F5D3A] flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[#EAF4E5] text-[#0F5D3A] flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div>
-            <div className="font-extrabold text-[#17231D] leading-tight">Everyday Essentials</div>
-            <div className="text-[11px] text-[#55695D] leading-tight">Fresh harvest &amp; local kirana</div>
+            <div className="font-extrabold text-[11px] sm:text-xs text-[#17231D] leading-tight">Everyday Essentials</div>
+            <div className="text-[10px] sm:text-[11px] text-[#55695D] leading-tight hidden xs:block">Fresh harvest &amp; local kirana</div>
           </div>
         </div>
 
         {/* Interactive Visual Mode Switcher (Top Right) */}
         <div
-          className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 flex items-center p-0.5 rounded-full bg-white/90 backdrop-blur-md border border-white/80 shadow-md text-[11px] font-bold text-[#55695D]"
+          className="absolute top-2.5 right-2.5 sm:top-5 sm:right-5 z-20 flex items-center p-0.5 rounded-full bg-white/90 backdrop-blur-md border border-white/80 shadow-md text-[10px] sm:text-[11px] font-bold text-[#55695D]"
           style={{
             transform: "translateZ(40px)",
           }}
@@ -214,7 +214,7 @@ export function HeroVisual() {
           <button
             type="button"
             onClick={() => setVisualMode("lifestyle")}
-            className={`px-2.5 py-1 rounded-full transition cursor-pointer ${
+            className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full transition cursor-pointer ${
               visualMode === "lifestyle"
                 ? "bg-[#0F5D3A] text-white shadow-xs"
                 : "text-[#55695D] hover:text-[#17231D]"
@@ -226,7 +226,7 @@ export function HeroVisual() {
           <button
             type="button"
             onClick={() => setVisualMode("basket")}
-            className={`px-2.5 py-1 rounded-full transition cursor-pointer ${
+            className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full transition cursor-pointer ${
               visualMode === "basket"
                 ? "bg-[#0F5D3A] text-white shadow-xs"
                 : "text-[#55695D] hover:text-[#17231D]"

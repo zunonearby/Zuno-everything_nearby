@@ -16,4 +16,14 @@ export const brand = {
   name: "ZUNO",
   tagline: "Everything nearby.",
   colors: brandColors,
+  contact: {
+    phone: "8887602317",
+    phoneDisplay: "+91 8887602317",
+    phoneTel: "8887602317",
+    phoneHours: "7:00 AM – 11:00 PM Daily",
+    email: "zunonearby@gmail.com",
+    emailHours: "Response within 24 business hours",
+    pin: "231217",
+    locality: "Renukoot Central",
+  },
 } as const;

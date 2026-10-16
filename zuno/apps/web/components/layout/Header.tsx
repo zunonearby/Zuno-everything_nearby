@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { brand } from "@zuno/config";
 
 import { MagneticElement } from "@/components/ui/MagneticElement";
 
@@ -42,8 +43,10 @@ export function Header() {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#EAEFEA]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-[#EAEFEA]">
+      {/* Background layer with backdrop blur separated to avoid fixed drawer containment */}
+      <div className="absolute inset-0 bg-white/95 backdrop-blur-md -z-10" />
+      <div className="relative max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between">
         {/* Brand Logo & Location Selector */}
         <div className="flex items-center gap-3 lg:gap-4">
           <Link href="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F5D3A] rounded-lg">
@@ -154,7 +157,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-[#17231D] hover:bg-[#F3F4F6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F5D3A]"
+            className="lg:hidden p-2 rounded-lg text-[#17231D] hover:bg-[#F3F4F6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F5D3A] min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-expanded={mobileMenuOpen}
             aria-label="Toggle Navigation Menu"
           >
@@ -171,106 +174,105 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Drawer Overlay */}
+      {/* Mobile Bottom Sheet Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setMobileMenuOpen(false)}>
+        <div
+          className="lg:hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-xs flex flex-col justify-end transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          {/* Hardware-accelerated slide-up keyframe animation */}
+          <style>{`
+            @keyframes zunoSheetSlideUp {
+              from {
+                transform: translateY(100%);
+              }
+              to {
+                transform: translateY(0);
+              }
+            }
+          `}</style>
           <div
-            className="fixed inset-y-0 right-0 max-w-[280px] sm:max-w-xs w-full bg-white shadow-xl flex flex-col justify-between p-5 sm:p-6 overflow-y-auto"
+            className="relative w-full max-w-md mx-auto bg-white rounded-t-3xl shadow-2xl p-4 pb-4 border-t border-[#EAEFEA] flex flex-col"
+            style={{
+              animation: "zunoSheetSlideUp 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#EAEFEA]">
-                <div className="relative w-24 h-8">
-                  <Image src="/brandlogo.png" alt="ZUNO" fill className="object-contain" />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-[#6B7A70] hover:bg-[#F3F4F6] focus:outline-none"
-                  aria-label="Close navigation menu"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+            {/* Drag Handle Indicator */}
+            <div className="w-10 h-1 rounded-full bg-[#D5E8CE] mx-auto mb-2" />
 
-              <div className="mt-4 px-2.5 py-1.5 rounded-lg bg-[#EAF4E5] text-[#0F5D3A] text-xs font-bold inline-block mb-4">
-                Renukoot Central (PIN 231217)
-              </div>
-
-              <nav className="flex flex-col gap-1.5">
-                <Link
-                  href="/"
-                  aria-current={pathname === "/" ? "page" : undefined}
-                  className={`group relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    pathname === "/"
-                      ? "bg-[#EAF4E5] text-[#0F5D3A] font-bold"
-                      : "text-[#17231D] hover:bg-gray-50 hover:text-[#0F5D3A]"
-                  }`}
-                >
-                  <span className="relative">
-                    Home
-                    <span
-                      aria-hidden="true"
-                      className={`absolute -bottom-1 left-0 right-0 h-[2px] rounded-full bg-[#0F5D3A] transition-all duration-300 ${
-                        pathname === "/" ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
-                      }`}
-                    />
-                  </span>
-                  {pathname === "/" && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0F5D3A]" />
-                  )}
-                </Link>
-                {NAV_LINKS.map((link) => {
-                  const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href + "/"));
-                  return (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      aria-current={isActive ? "page" : undefined}
-                      className={`group relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                        isActive
-                          ? "bg-[#EAF4E5] text-[#0F5D3A] font-bold"
-                          : "text-[#17231D] hover:bg-gray-50 hover:text-[#0F5D3A]"
-                      }`}
-                    >
-                      <span className="relative">
-                        {link.name}
-                        <span
-                          aria-hidden="true"
-                          className={`absolute -bottom-1 left-0 right-0 h-[2px] rounded-full bg-[#0F5D3A] transition-all duration-300 ${
-                            isActive ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
-                          }`}
-                        />
-                      </span>
-                      {isActive && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#0F5D3A]" />
-                      )}
-                    </Link>
-                  );
-                })}
-                <div className="border-t border-[#EAEFEA] my-2 pt-2">
-                  <Link
-                    href="/privacy"
-                    className="block px-3 py-2 text-xs font-medium text-[#6B7A70] hover:text-[#0F5D3A]"
-                  >
-                    Privacy Policy
-                  </Link>
-                  <Link
-                    href="/terms"
-                    className="block px-3 py-2 text-xs font-medium text-[#6B7A70] hover:text-[#0F5D3A]"
-                  >
-                    Terms of Service
-                  </Link>
+            {/* Header: Logo, PIN badge, Close button */}
+            <div className="flex items-center justify-between pb-2 border-b border-[#EAEFEA]">
+              <div className="flex items-center gap-2">
+                <div className="relative w-20 h-6">
+                  <Image src="/brandlogo.png" alt="ZUNO" fill className="object-contain" priority />
                 </div>
-              </nav>
+                <span className="px-2 py-0.5 rounded-full bg-[#EAF4E5] text-[#0F5D3A] text-[10px] font-bold">
+                  PIN {brand.contact.pin}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1 rounded-full text-[#6B7A70] hover:bg-[#F3F4F6] focus:outline-none min-w-[36px] min-h-[36px] flex items-center justify-center transition"
+                aria-label="Close navigation menu"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <div className="pt-6 border-t border-[#EAEFEA]">
+            {/* Menu Links - Compact vertical list with tight spacing */}
+            <nav className="flex flex-col gap-0.5 my-2">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-current={pathname === "/" ? "page" : undefined}
+                className={`group flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  pathname === "/"
+                    ? "bg-[#EAF4E5] text-[#0F5D3A] font-bold"
+                    : "text-[#17231D] hover:bg-[#F8FAF6] hover:text-[#0F5D3A]"
+                }`}
+              >
+                <span>Home</span>
+                {pathname === "/" ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F5D3A]" />
+                ) : (
+                  <span className="text-[#C2CFC6] text-[10px] group-hover:text-[#0F5D3A] transition">→</span>
+                )}
+              </Link>
+              {NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href + "/"));
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`group flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      isActive
+                        ? "bg-[#EAF4E5] text-[#0F5D3A] font-bold"
+                        : "text-[#17231D] hover:bg-[#F8FAF6] hover:text-[#0F5D3A]"
+                    }`}
+                  >
+                    <span>{link.name}</span>
+                    {isActive ? (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0F5D3A]" />
+                    ) : (
+                      <span className="text-[#C2CFC6] text-[10px] group-hover:text-[#0F5D3A] transition">→</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Bottom CTA Button */}
+            <div className="pt-2 border-t border-[#EAEFEA]">
               <Link
                 href="/download"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-[#0F5D3A] text-white hover:bg-[#0B482D] transition shadow-md"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#0F5D3A] text-white hover:bg-[#0B482D] transition shadow-sm min-h-[40px]"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -282,9 +284,6 @@ export function Header() {
                 </svg>
                 <span>Install Customer App</span>
               </Link>
-              <p className="text-[11px] text-[#6B7A70] text-center mt-2">
-                Order fulfillment occurs inside the Customer App
-              </p>
             </div>
           </div>
         </div>

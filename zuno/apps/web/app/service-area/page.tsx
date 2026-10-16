@@ -2,119 +2,153 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { pincodeSchema } from "@zuno/validation";
-import { createPublicClient } from "@/lib/supabase";
-import type { ServiceArea } from "@zuno/types";
+import { checkServiceAreaAvailability, ServiceAreaCheckResult } from "@/lib/serviceArea";
 
-type CheckStatus = "IDLE" | "LOADING" | "SERVICEABLE" | "UNSUPPORTED" | "ERROR";
+type FormState = "IDLE" | "LOADING" | "SUBMITTED";
 
 export default function ServiceAreaPage() {
   const [pinInput, setPinInput] = useState("231217");
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [status, setStatus] = useState<CheckStatus>("IDLE");
-  const [resultArea, setResultArea] = useState<ServiceArea | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [formState, setFormState] = useState<FormState>("IDLE");
+  const [checkResult, setCheckResult] = useState<ServiceAreaCheckResult | null>(null);
 
-  const handleCheckPincode = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setValidationError(null);
-    setErrorMessage(null);
-    setResultArea(null);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only accept numeric digits, up to 6 digits max
+    const sanitized = e.target.value.replace(/\D/g, "").slice(0, 6);
+    setPinInput(sanitized);
 
-    const trimmed = pinInput.trim();
-
-    // 1. Validate PIN code format using @zuno/validation
-    const validationResult = pincodeSchema.safeParse(trimmed);
-    if (!validationResult.success) {
-      setValidationError("Please enter a valid 6-digit Indian PIN code (e.g. 231217).");
-      setStatus("IDLE");
-      return;
+    if (validationError) {
+      setValidationError(null);
     }
-
-    // 2. Query Supabase service_areas table
-    setStatus("LOADING");
-    try {
-      const supabase = createPublicClient();
-      const { data, error } = await supabase
-        .from("service_areas")
-        .select("*")
-        .eq("pincode", trimmed)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (error) {
-        console.error("[ServiceArea] Query error:", error);
-        setStatus("ERROR");
-        setErrorMessage("Unable to verify PIN code coverage right now. Please try again.");
-        return;
-      }
-
-      if (data) {
-        setResultArea(data as ServiceArea);
-        setStatus("SERVICEABLE");
-      } else {
-        setStatus("UNSUPPORTED");
-      }
-    } catch (err: any) {
-      console.error("[ServiceArea] Unexpected exception:", err);
-      setStatus("ERROR");
-      setErrorMessage(err?.message || "Connection error. Please check your internet connection.");
+    if (checkResult) {
+      setCheckResult(null);
+      setFormState("IDLE");
     }
   };
 
+  const handleInputBlur = () => {
+    if (pinInput.length > 0 && pinInput.length < 6) {
+      setValidationError("PIN code must be exactly 6 digits (e.g. 231217).");
+    }
+  };
+
+  const handleCheckPincode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const trimmed = pinInput.trim();
+
+    // 1. Validate exactly 6 digits
+    if (!/^\d{6}$/.test(trimmed)) {
+      setValidationError("Please enter a valid 6-digit Indian PIN code (e.g. 231217).");
+      setCheckResult(null);
+      setFormState("IDLE");
+      return;
+    }
+
+    setValidationError(null);
+    setFormState("LOADING");
+
+    try {
+      // 2. Perform availability verification against database & approved configuration
+      const result = await checkServiceAreaAvailability(trimmed);
+      setCheckResult(result);
+      setFormState("SUBMITTED");
+    } catch (err: any) {
+      // If unexpected error occurs during check, treat as UNKNOWN per guidelines
+      setCheckResult({
+        status: "UNKNOWN",
+        pincode: trimmed,
+        source: "unconfigured",
+      });
+      setFormState("SUBMITTED");
+    }
+  };
+
+  const isSubmitDisabled = pinInput.length !== 6 || formState === "LOADING";
+
   return (
-    <div className="py-12 sm:py-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Title */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF4E5] text-[#0F5D3A] text-xs font-bold mb-4">
-            Hyperlocal Delivery Radius Checker
+    <div className="py-6 sm:py-10 bg-[#F8FAF6] min-h-[calc(100vh-4rem)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Title Section */}
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF4E5] text-[#0F5D3A] text-xs font-bold mb-3 border border-[#D5E8CE] shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse" />
+            <span>Hyperlocal Service Area Checker</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black text-[#111827] tracking-tight">
-            Check Your <span className="text-[#0F5D3A]">Service Area</span>
+
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#17231D] tracking-tight leading-tight">
+            Is ZUNO available near you?
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-[#6B7A70] leading-relaxed max-w-2xl mx-auto">
-            ZUNO delivers from neighborhood stores to your doorstep within a dedicated radius.
-            Verify if your postal PIN code is currently active on our platform.
+
+          <p className="mt-2.5 text-xs sm:text-sm lg:text-base text-[#55695D] leading-relaxed max-w-2xl mx-auto">
+            Enter your 6-digit PIN code to check service availability.
           </p>
         </div>
 
         {/* Interactive PIN Checker Card */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-10 border border-[#EAEFEA] shadow-md mb-12">
-          <form onSubmit={handleCheckPincode} className="max-w-xl mx-auto">
-            <label htmlFor="pincode-input" className="block text-xs font-bold text-[#111827] uppercase tracking-wider mb-2 text-center">
-              Enter 6-Digit Delivery PIN Code
+        <div
+          id="service-checker"
+          className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 border border-[#EAEFEA] shadow-xs mb-6 sm:mb-8 scroll-mt-24"
+        >
+          <form onSubmit={handleCheckPincode} className="max-w-xl mx-auto" noValidate>
+            <label
+              htmlFor="pincode-input"
+              className="block text-xs font-bold text-[#17231D] uppercase tracking-wider mb-2.5 text-center sm:text-left"
+            >
+              Delivery PIN Code
             </label>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <input
                   id="pincode-input"
+                  name="pincode"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="postal-code"
                   maxLength={6}
                   value={pinInput}
-                  onChange={(e) => {
-                    setPinInput(e.target.value.replace(/\D/g, ""));
-                    if (validationError) setValidationError(null);
-                  }}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
                   placeholder="e.g. 231217"
-                  className="w-full px-4 py-3.5 rounded-xl border border-[#D1D5DB] text-center sm:text-left text-lg font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#0F5D3A] focus:border-transparent transition bg-[#F9FAFB]"
-                  aria-describedby={validationError ? "pincode-error" : undefined}
+                  className={`w-full px-4 py-3.5 rounded-xl border text-center sm:text-left text-lg font-bold text-[#17231D] focus:outline-none focus:ring-2 focus:ring-[#0F5D3A] transition tracking-wider ${
+                    validationError
+                      ? "border-red-400 bg-red-50/30 focus:ring-red-500"
+                      : "border-[#D1D5DB] bg-[#F9FAFB] focus:border-[#0F5D3A]"
+                  }`}
+                  aria-invalid={!!validationError}
+                  aria-describedby={validationError ? "pincode-validation-msg" : undefined}
                 />
+                {pinInput.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPinInput("");
+                      setValidationError(null);
+                      setCheckResult(null);
+                      setFormState("IDLE");
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#9CA3AF] hover:text-[#4B5563] px-1.5 py-0.5 rounded"
+                    aria-label="Clear PIN code"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
 
               <button
                 type="submit"
-                disabled={status === "LOADING"}
-                className="px-6 py-3.5 rounded-xl font-bold text-sm bg-[#0F5D3A] text-white hover:bg-[#0B482D] transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={isSubmitDisabled}
+                className="px-6 py-3.5 rounded-xl font-bold text-sm bg-[#0F5D3A] text-white hover:bg-[#0B482D] transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 min-w-[170px]"
               >
-                {status === "LOADING" ? (
+                {formState === "LOADING" ? (
                   <>
                     <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
-                    <span>Verifying...</span>
+                    <span>Checking...</span>
                   </>
                 ) : (
                   <span>Check Availability</span>
@@ -122,44 +156,138 @@ export default function ServiceAreaPage() {
               </button>
             </div>
 
-            {/* Validation Error Message */}
+            {/* Validation Message */}
             {validationError && (
-              <p id="pincode-error" className="mt-2.5 text-xs font-semibold text-red-600 text-center">
-                {validationError}
+              <p
+                id="pincode-validation-msg"
+                role="alert"
+                className="mt-2.5 text-xs font-semibold text-red-600 text-center sm:text-left flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{validationError}</span>
               </p>
             )}
 
-            <p className="mt-3 text-xs text-[#9CA3AF] text-center">
-              Example starting PIN: <button type="button" onClick={() => { setPinInput("231217"); }} className="font-bold text-[#0F5D3A] underline">231217</button> (Renukoot Central)
-            </p>
+            {/* Quick Test / Reference Helpers */}
+            <div className="mt-4 pt-3 border-t border-[#F3F4F6] text-xs text-[#6B7A70] flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[11px] font-medium">Quick Test Examples:</span>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinInput("231217");
+                    setValidationError(null);
+                    setCheckResult(null);
+                    setFormState("IDLE");
+                  }}
+                  className="px-2 py-0.5 rounded bg-[#EAF4E5] text-[#0F5D3A] font-bold hover:bg-[#D5E8CE] transition"
+                  title="Approved initial launch PIN"
+                >
+                  231217 (Launch Hub)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinInput("231222");
+                    setValidationError(null);
+                    setCheckResult(null);
+                    setFormState("IDLE");
+                  }}
+                  className="px-2 py-0.5 rounded bg-gray-100 text-[#4B5563] font-semibold hover:bg-gray-200 transition"
+                  title="Configured unserviced PIN"
+                >
+                  231222 (Configured Inactive)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinInput("110001");
+                    setValidationError(null);
+                    setCheckResult(null);
+                    setFormState("IDLE");
+                  }}
+                  className="px-2 py-0.5 rounded bg-gray-100 text-[#4B5563] font-semibold hover:bg-gray-200 transition"
+                  title="Unconfigured PIN"
+                >
+                  110001 (Unconfigured)
+                </button>
+              </div>
+            </div>
           </form>
 
-          {/* Result States */}
-          <div className="mt-8 pt-6 border-t border-[#EAEFEA]">
-            {/* Status: SERVICEABLE */}
-            {status === "SERVICEABLE" && resultArea && (
-              <div className="p-6 rounded-2xl bg-[#EAF4E5] border border-[#CDE3C4] text-[#0F5D3A]">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#0F5D3A] text-white flex items-center justify-center font-bold text-lg shrink-0">
-                    ✓
+          {/* Result States Presentation */}
+          <div className="mt-8 pt-6 border-t border-[#EAEFEA]" aria-live="polite">
+            {/* -------------------------------------------------------------
+                RESULT STATE 1: AVAILABLE
+                - Green check icon
+                - Heading: “ZUNO is available in your area!”
+                - Matched PIN code and confirmed service data
+                - CTA: “Get the Customer App” linking to /download
+               ------------------------------------------------------------- */}
+            {checkResult?.status === "AVAILABLE" && (
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#F0F8EC] border border-[#C2E2B8] text-[#17231D] shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
+                  <div className="w-12 h-12 rounded-full bg-[#0F5D3A] text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-sm">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
                   </div>
+
                   <div className="flex-1">
-                    <div className="inline-block px-2.5 py-0.5 rounded-full bg-[#0F5D3A] text-white text-[11px] font-bold mb-2">
-                      Active Hyperlocal Delivery Zone
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0F5D3A] text-white text-[11px] font-bold mb-2">
+                      <span>✓ Verified Hyperlocal Zone</span>
                     </div>
-                    <h3 className="text-lg font-black text-[#111827]">
-                      {resultArea.name} ({resultArea.pincode})
-                    </h3>
-                    <p className="text-xs sm:text-sm text-[#246142] mt-1 leading-relaxed">
-                      Great news! ZUNO is currently operational in {resultArea.city}, {resultArea.state}.
-                      Verified neighborhood grocery, fruit, and vegetable stores are active in this zone.
+
+                    <h2 className="text-xl sm:text-2xl font-black text-[#17231D] tracking-tight">
+                      ZUNO is available in your area!
+                    </h2>
+
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-[#0F5D3A]">
+                      <span className="px-2.5 py-1 rounded-md bg-white border border-[#C2E2B8] font-mono font-bold text-[#0F5D3A]">
+                        PIN {checkResult.pincode}
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {checkResult.details?.name || "Renukoot Central"} · {checkResult.details?.city || "Renukoot"}, {checkResult.details?.state || "Uttar Pradesh"}
+                      </span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-[#2D5A3E] mt-3 leading-relaxed">
+                      Doorstep delivery is active in this zone! You can access verified neighborhood grocery,
+                      daily essentials, dairy, and fresh produce merchants with fast local rider fulfillment.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
+
+                    {checkResult.details?.hub_address && (
+                      <p className="text-xs text-[#527962] mt-1.5">
+                        <strong className="text-[#0F5D3A]">Fulfillment Hub:</strong> {checkResult.details.hub_address}
+                      </p>
+                    )}
+
+                    <div className="mt-6 flex flex-wrap gap-3 items-center">
                       <Link
                         href="/download"
-                        className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0F5D3A] text-white hover:bg-[#0B482D] transition shadow-sm"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold bg-[#0F5D3A] text-white hover:bg-[#0B482D] transition shadow-sm group"
                       >
-                        Install Customer App to Order →
+                        <span>Get the Customer App</span>
+                        <span className="group-hover:translate-x-0.5 transition">→</span>
+                      </Link>
+                      <Link
+                        href="/categories"
+                        className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold text-[#0F5D3A] hover:bg-white/60 transition"
+                      >
+                        Explore 7 Categories
                       </Link>
                     </div>
                   </div>
@@ -167,31 +295,77 @@ export default function ServiceAreaPage() {
               </div>
             )}
 
-            {/* Status: UNSUPPORTED */}
-            {status === "UNSUPPORTED" && (
-              <div className="p-6 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E]">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#F59E0B] text-white flex items-center justify-center font-bold text-lg shrink-0">
-                    !
+            {/* -------------------------------------------------------------
+                RESULT STATE 2: NOT AVAILABLE
+                - Neutral informational icon
+                - Heading: “ZUNO isn't available in your area yet.”
+                - Explain service area may expand in the future
+                - Do not promise launch date or allow orders from unsupported areas
+               ------------------------------------------------------------- */}
+            {checkResult?.status === "NOT_AVAILABLE" && (
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#F9FAF8] border border-[#E5E7EB] text-[#17231D] shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
+                  <div className="w-12 h-12 rounded-full bg-[#E5E7EB] text-[#4B5563] flex items-center justify-center font-bold text-xl shrink-0">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
                   </div>
+
                   <div className="flex-1">
-                    <div className="inline-block px-2.5 py-0.5 rounded-full bg-[#F59E0B] text-white text-[11px] font-bold mb-2">
-                      Service Not Yet Available
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E5E7EB] text-[#4B5563] text-[11px] font-bold mb-2">
+                      <span>Outside Current Operating Radius</span>
                     </div>
-                    <h3 className="text-lg font-black text-[#111827]">
-                      PIN {pinInput} is not currently active
-                    </h3>
-                    <p className="text-xs sm:text-sm text-[#78350F] mt-1 leading-relaxed">
-                      We currently service Renukoot Central (PIN 231217) and are systematically expanding to
-                      neighboring residential colonies. If you are a local shopkeeper interested in partnering,
-                      please contact our team.
+
+                    <h2 className="text-xl sm:text-2xl font-black text-[#17231D] tracking-tight">
+                      ZUNO isn&apos;t available in your area yet.
+                    </h2>
+
+                    <div className="mt-2.5 flex items-center gap-2 text-xs sm:text-sm text-[#4B5563]">
+                      <span className="px-2.5 py-1 rounded-md bg-white border border-[#E5E7EB] font-mono font-bold text-[#17231D]">
+                        PIN {checkResult.pincode}
+                      </span>
+                      {checkResult.details?.name && (
+                        <span>• {checkResult.details.name} ({checkResult.details.city}, {checkResult.details.state})</span>
+                      )}
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-[#55695D] mt-3 leading-relaxed">
+                      ZUNO operates within strict hyperlocal dispatch zones to guarantee item freshness and fast
+                      fulfillment. We are currently operational in <strong>Renukoot Central (PIN 231217)</strong>.
+                      While our service area may expand to additional sectors in the future, orders are not
+                      currently supported for this PIN code.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
+
+                    <div className="mt-4 p-3 rounded-xl bg-white border border-[#EAEFEA] text-xs text-[#6B7A70]">
+                      <span className="font-bold text-[#17231D]">Ordering Policy:</span> In order to preserve
+                      cold-chain freshness and realistic rider delivery times, orders cannot be placed from unsupported
+                      locations. We do not provide advance launch commitments or speculative delivery estimates.
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3 items-center">
                       <Link
                         href="/contact"
-                        className="px-4 py-2 rounded-xl text-xs font-bold bg-[#92400E] text-white hover:bg-[#78350F] transition"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#17231D] text-white hover:bg-black transition shadow-sm"
                       >
-                        Merchant Partnership Inquiries →
+                        <span>Local Shopkeeper Inquiries</span>
+                        <span>→</span>
+                      </Link>
+                      <Link
+                        href="/about"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#6B7A70] hover:text-[#17231D] transition"
+                      >
+                        About Our Mission
                       </Link>
                     </div>
                   </div>
@@ -199,55 +373,150 @@ export default function ServiceAreaPage() {
               </div>
             )}
 
-            {/* Status: ERROR */}
-            {status === "ERROR" && (
-              <div className="p-6 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">⚠️</span>
-                  <div>
-                    <h4 className="font-bold text-sm">Lookup Failed</h4>
-                    <p className="text-xs text-[#7F1D1D] mt-0.5">
-                      {errorMessage || "Database verification was unsuccessful. Please verify your connection."}
+            {/* -------------------------------------------------------------
+                RESULT STATE 3: UNKNOWN / UNCONFIGURED
+                - Heading: “We couldn't confirm availability for this PIN code.”
+                - If PIN code cannot be checked against reliable service-area data
+                - Do not incorrectly classify unknown PIN codes as unavailable
+               ------------------------------------------------------------- */}
+            {checkResult?.status === "UNKNOWN" && (
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#F8FAFC] border border-[#CBD5E1] text-[#1E293B] shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
+                  <div className="w-12 h-12 rounded-full bg-[#E2E8F0] text-[#475569] flex items-center justify-center font-bold text-xl shrink-0">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-bold mb-2">
+                      <span>Unconfirmed Service Area Record</span>
+                    </div>
+
+                    <h2 className="text-xl sm:text-2xl font-black text-[#1E293B] tracking-tight">
+                      We couldn&apos;t confirm availability for this PIN code.
+                    </h2>
+
+                    <div className="mt-2.5 flex items-center gap-2 text-xs sm:text-sm text-[#475569]">
+                      <span className="px-2.5 py-1 rounded-md bg-white border border-[#CBD5E1] font-mono font-bold text-[#1E293B]">
+                        PIN {checkResult.pincode}
+                      </span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-[#475569] mt-3 leading-relaxed">
+                      We were unable to confirm delivery coverage against reliable service-area data for PIN {checkResult.pincode}.
+                      This postal code is not currently indexed in ZUNO&apos;s verified launch directory.
                     </p>
+
+                    <div className="mt-4 p-3 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#64748B]">
+                      <span className="font-bold text-[#334155]">Policy on Unconfirmed Codes:</span> We do not
+                      classify unknown or unverified PIN codes as unavailable. If your location is within or adjacent
+                      to Renukoot Central, please confirm your 6-digit postal code with your local post office or
+                      contact our team to check manual eligibility.
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3 items-center">
+                      <Link
+                        href="/contact"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#334155] text-white hover:bg-[#1E293B] transition shadow-sm"
+                      >
+                        <span>Contact Support Desk</span>
+                        <span>→</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPinInput("231217");
+                          setValidationError(null);
+                          setCheckResult(null);
+                          setFormState("IDLE");
+                        }}
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-[#0F5D3A] hover:bg-emerald-50 transition"
+                      >
+                        Check Launch PIN 231217
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Status: IDLE */}
-            {status === "IDLE" && (
-              <div className="text-center py-4 text-xs text-[#6B7A70]">
-                Enter your PIN code above to verify real-time coverage from the official ZUNO database.
+            {/* -------------------------------------------------------------
+                RESULT STATE 4: IDLE
+               ------------------------------------------------------------- */}
+            {formState === "IDLE" && (
+              <div className="text-center py-6 text-xs text-[#6B7A70]">
+                Enter your 6-digit PIN code above and click <span className="font-bold text-[#0F5D3A]">Check Availability</span> to verify live coverage.
               </div>
             )}
           </div>
         </div>
 
-        {/* Coverage Clarifications */}
-        <div className="bg-white rounded-3xl p-8 border border-[#EAEFEA] space-y-6">
-          <h2 className="text-xl font-black text-[#111827]">Coverage Details & Principles</h2>
-          
+        {/* Coverage Clarifications & Operational Principles */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 border border-[#EAEFEA] space-y-6 shadow-xs">
+          <div className="flex items-center justify-between pb-4 border-b border-[#EAEFEA]">
+            <h2 className="text-lg sm:text-xl font-black text-[#17231D]">
+              Service Area Policies &amp; Operational Boundaries
+            </h2>
+            <span className="text-xs font-bold text-[#0F5D3A] bg-[#EAF4E5] px-2.5 py-1 rounded-full border border-[#D5E8CE]">
+              Hyperlocal Radius
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm text-[#4B5563]">
-            <div>
-              <h3 className="font-bold text-[#111827] mb-1">📍 Local Hub Presence</h3>
+            <div className="space-y-1.5">
+              <h3 className="font-bold text-[#17231D] flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#0F5D3A] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Active Operating Hub — Renukoot Central</span>
+              </h3>
               <p className="leading-relaxed text-[#6B7A70]">
-                Our active operations hub is stationed in Renukoot Central, ensuring swift rider dispatch
-                and continuous order handover from merchant counters.
+                Our initial launch operations and partner merchant network are centered in <strong>Renukoot Central (PIN 231217)</strong>,
+                Uttar Pradesh, covering residential colonies and market zones.
               </p>
             </div>
-            <div>
-              <h3 className="font-bold text-[#111827] mb-1">⚡ Freshness Over Distance</h3>
+
+            <div className="space-y-1.5">
+              <h3 className="font-bold text-[#17231D] flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#0F5D3A] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+                <span>Independent Ordering Verification</span>
+              </h3>
               <p className="leading-relaxed text-[#6B7A70]">
-                We deliberately constrain dispatch radii to keep vegetable, dairy, and grocery items fresh,
-                preventing multi-kilometer delays.
+                The website checker is informational. Client-provided PIN codes cannot be used to bypass service-area
+                restrictions during actual ordering; the ZUNO Customer App and backend enforce availability independently.
               </p>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#F8FAF6] border border-[#EAEFEA] text-xs text-[#6B7A70]">
-            <span className="font-bold text-[#0F5D3A]">Note on Order Dispatch:</span> Final delivery eligibility
-            and store availability are calculated based on your precise device coordinates inside the
-            ZUNO Customer Mobile App.
+          <div className="p-4 rounded-xl bg-[#F8FAF6] border border-[#EAEFEA] text-xs text-[#6B7A70] flex items-start gap-3">
+            <div className="w-5 h-5 rounded-md bg-[#EAF4E5] border border-[#D5E8CE] flex items-center justify-center shrink-0 text-[#0F5D3A] mt-0.5">
+              <svg className="w-3.5 h-3.5 text-[#0F5D3A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4"/>
+                <path d="M12 8h.01"/>
+              </svg>
+            </div>
+            <div>
+              <strong className="text-[#17231D]">Informational Notice:</strong> ZUNO does not support cart checkout
+              or order placement on the public website. To order from verified neighborhood stores, please install
+              the official <Link href="/download" className="text-[#0F5D3A] font-bold underline hover:text-[#0B482D] transition">ZUNO Customer App</Link>.
+            </div>
           </div>
         </div>
       </div>

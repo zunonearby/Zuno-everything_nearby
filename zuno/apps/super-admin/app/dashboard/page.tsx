@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 
 // Demo Data for Super Admin Dashboard
 const platformOrders = [
@@ -195,27 +196,48 @@ export default function SuperAdminDashboard() {
               { id: "analytics", label: "Platform Analytics", icon: "📊" },
               { id: "activity", label: "Activity Logs", icon: "📋" },
               { id: "settings", label: "System Settings", icon: "⚙️" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === item.id
-                    ? "bg-[#22A06B] text-white shadow-sm"
-                    : "text-[#D2E7D9] hover:bg-[#157248] hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-sm">{item.icon}</span>
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className="bg-[#A7D56B] text-[#0F5D3A] text-[10px] font-black px-2 py-0.5 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            ))}
+            ].map((item) => {
+              const isShops = item.id === "shops" || item.id === "shopkeepers";
+              const content = (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="bg-[#A7D56B] text-[#0F5D3A] text-[10px] font-black px-2 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </>
+              );
+
+              if (isShops) {
+                return (
+                  <Link
+                    key={item.id}
+                    href="/shops"
+                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold transition-all text-[#D2E7D9] hover:bg-[#157248] hover:text-white"
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeTab === item.id
+                      ? "bg-[#22A06B] text-white shadow-sm"
+                      : "text-[#D2E7D9] hover:bg-[#157248] hover:text-white"
+                  }`}
+                >
+                  {content}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -420,9 +442,12 @@ export default function SuperAdminDashboard() {
                 <h4 className="font-black text-lg text-[#17231D]">Merchant Onboarding & Verification</h4>
                 <p className="text-xs text-gray-500">Review local shop registration requests and verification status</p>
               </div>
-              <button className="text-xs font-bold text-[#0F5D3A] hover:text-[#22A06B] transition-colors">
+              <Link
+                href="/shops"
+                className="text-xs font-bold text-[#0F5D3A] hover:text-[#22A06B] transition-colors"
+              >
                 View All Merchants →
-              </button>
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -452,9 +477,12 @@ export default function SuperAdminDashboard() {
 
                   <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-[10px] text-gray-400">Applied: {merch.date}</span>
-                    <button className="bg-[#0F5D3A] hover:bg-[#22A06B] text-white text-[11px] font-bold px-3 py-1 rounded-lg transition-colors">
+                    <Link
+                      href="/shops"
+                      className="bg-[#0F5D3A] hover:bg-[#22A06B] text-white text-[11px] font-bold px-3 py-1 rounded-lg transition-colors inline-block"
+                    >
                       Review Store
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}

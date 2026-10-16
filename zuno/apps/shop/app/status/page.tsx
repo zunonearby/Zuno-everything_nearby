@@ -10,7 +10,12 @@ export default function ShopStatusPage() {
 
   useEffect(() => {
     async function load() {
-      const s = await getCurrentShopkeeper();
+      let phoneParam: string | undefined;
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        phoneParam = urlParams.get("phone") || undefined;
+      }
+      const s = await getCurrentShopkeeper(phoneParam);
       setShopkeeper(s);
       setLoading(false);
     }

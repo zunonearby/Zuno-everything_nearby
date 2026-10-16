@@ -48,10 +48,10 @@ const CATEGORIES = [
 
 export default function CategoriesPage() {
   return (
-    <div className="py-12 sm:py-16">
+    <div className="bg-white min-h-[calc(100vh-4rem)] py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb & Header */}
-        <div className="mb-10">
+        <div className="mb-8 sm:mb-10">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#6B7A70] mb-3">
             <Link href="/" className="hover:text-[#0F5D3A] transition">Home</Link>
             <span>/</span>
@@ -70,9 +70,9 @@ export default function CategoriesPage() {
           {CATEGORIES.map((cat) => (
             <div
               key={cat.slug}
-              className="bg-white rounded-2xl border border-[#EAEFEA] overflow-hidden p-4 hover:border-[#22A06B]/50 hover:shadow-md transition group"
+              className="bg-white rounded-2xl border border-[#EAEFEA] overflow-hidden p-4 hover:border-[#22A06B]/50 hover:shadow-md transition group shadow-xs"
             >
-              <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-[#F8FAF6] mb-4">
+              <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-gray-50 mb-4">
                 <Image
                   src={cat.image}
                   alt={cat.name}
@@ -99,10 +99,10 @@ export default function CategoriesPage() {
         </div>
 
         {/* Notice */}
-        <div className="mt-12 p-6 rounded-2xl bg-[#EAF4E5] border border-[#D5E8CE] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 p-6 rounded-2xl bg-white border border-[#EAEFEA] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="font-bold text-sm text-[#0F5D3A]">Ready to shop?</h3>
-            <p className="text-xs text-[#416B4D] mt-0.5">
+            <h3 className="font-bold text-sm text-[#17231D]">Ready to shop?</h3>
+            <p className="text-xs text-[#55695D] mt-0.5">
               Browse on the web, then install the ZUNO Customer App to build your cart and place orders.
             </p>
           </div>

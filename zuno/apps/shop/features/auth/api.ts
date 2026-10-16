@@ -39,83 +39,62 @@ export async function requestShopkeeperOtp(phone: string) {
 
 export async function registerShopkeeper(input: RegisterShopInput): Promise<ShopkeeperAccount> {
   const supabase = createClient();
-  const formattedPhone = input.phone.startsWith("+") ? input.phone : `+91${input.phone.replace(/\D/g, "")}`;
+  const cleanPhone = input.phone.replace(/\D/g, "");
+  const formattedPhone = cleanPhone.startsWith("+") ? cleanPhone : `+91${cleanPhone}`;
 
-  // Check authenticated user
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id || `user-shop-${Date.now()}`;
+  // Call the atomic registration RPC (SECURITY DEFINER)
+  const { data: rpcRes, error: rpcErr } = await supabase.rpc("register_shop_application", {
+    p_owner_name: input.ownerFullName,
+    p_phone: formattedPhone,
+    p_shop_name: input.shopName,
+    p_description: input.description || "Fresh local grocery & daily essentials",
+    p_address_line: input.addressLine,
+    p_locality: input.locality,
+    p_pincode: input.pincode || "231217",
+  });
 
-  // 1. Ensure profile exists with SHOPKEEPER role
-  if (userData?.user) {
-    await supabase.from("profiles").upsert({
-      id: userId,
-      role: UserRole.SHOPKEEPER,
-      full_name: input.ownerFullName,
+  if (!rpcErr && rpcRes?.success) {
+    return {
+      id: rpcRes.shop_id,
+      userId: rpcRes.user_id,
+      fullName: input.ownerFullName,
       phone: formattedPhone,
-      updated_at: new Date().toISOString(),
-    });
+      role: "SHOPKEEPER",
+      shopId: rpcRes.shop_id,
+      shopName: input.shopName,
+      isApproved: false,
+      approvalStatus: "PENDING",
+    };
   }
 
-  // 2. Insert or update Shop record with default approval_status = PENDING
-  const { data: shopData, error: shopErr } = await supabase
-    .from("shops")
-    .insert({
-      owner_id: userId,
-      name: input.shopName,
-      description: input.description || "Fresh local grocery & daily essentials",
-      phone: formattedPhone,
-      address_line: input.addressLine,
-      locality: input.locality,
-      pincode: input.pincode || "231217",
-      is_approved: false,
-      approval_status: "PENDING",
-      is_active: true,
-      lat: 24.2185,
-      lng: 83.0326,
-    })
-    .select("*")
-    .single();
+  if (rpcErr) {
+    console.error("[ShopAuth] Registration RPC error:", rpcErr);
+    throw new Error(`Registration failed: ${rpcErr.message}`);
+  }
 
-  const account: ShopkeeperAccount = {
-    id: shopData?.id || `shop-demo-${Date.now()}`,
-    userId: userId,
-    fullName: input.ownerFullName,
-    phone: formattedPhone,
-    role: "SHOPKEEPER",
-    shopId: shopData?.id,
-    shopName: input.shopName,
-    isApproved: false,
-    approvalStatus: "PENDING",
-  };
-
-  return account;
+  throw new Error("Unable to complete shop registration. Please verify details.");
 }
 
-export async function getCurrentShopkeeper(): Promise<ShopkeeperAccount | null> {
+export async function getShopByPhone(phone: string): Promise<ShopkeeperAccount | null> {
   const supabase = createClient();
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user) return null;
+  const clean = phone.replace(/\D/g, "");
+  const formatted = clean.startsWith("+") ? clean : `+91${clean}`;
 
-    const userId = userData.user.id;
-    const { data: shop } = await supabase
+  try {
+    const { data: shop, error } = await supabase
       .from("shops")
       .select("*")
-      .eq("owner_id", userId)
+      .or(`phone.eq.${formatted},phone.eq.${clean}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (shop) {
+    if (shop && !error) {
       return {
         id: shop.id,
-        userId: userId,
-        fullName: profile?.full_name || "Shop Owner",
-        phone: shop.phone || profile?.phone || "",
+        userId: shop.owner_id,
+        fullName: "Shop Owner",
+        phone: shop.phone || phone,
         role: "SHOPKEEPER",
         shopId: shop.id,
         shopName: shop.name,
@@ -124,7 +103,50 @@ export async function getCurrentShopkeeper(): Promise<ShopkeeperAccount | null> 
       };
     }
   } catch (err) {
+    console.warn("[ShopAuth] Error fetching shop by phone:", err);
+  }
+
+  return null;
+}
+
+export async function getCurrentShopkeeper(phoneFallback?: string): Promise<ShopkeeperAccount | null> {
+  const supabase = createClient();
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user) {
+      const userId = userData.user.id;
+      const { data: shop } = await supabase
+        .from("shops")
+        .select("*")
+        .eq("owner_id", userId)
+        .maybeSingle();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (shop) {
+        return {
+          id: shop.id,
+          userId: userId,
+          fullName: profile?.full_name || "Shop Owner",
+          phone: shop.phone || profile?.phone || "",
+          role: "SHOPKEEPER",
+          shopId: shop.id,
+          shopName: shop.name,
+          isApproved: Boolean(shop.is_approved),
+          approvalStatus: (shop.approval_status as any) || (shop.is_approved ? "APPROVED" : "PENDING"),
+        };
+      }
+    }
+  } catch (err) {
     console.warn("[ShopAuth] Error fetching current shopkeeper:", err);
+  }
+
+  if (phoneFallback) {
+    return getShopByPhone(phoneFallback);
   }
 
   return null;

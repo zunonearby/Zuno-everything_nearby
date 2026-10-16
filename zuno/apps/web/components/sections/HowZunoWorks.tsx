@@ -24,9 +24,9 @@ const STAGES: StageStep[] = [
   {
     id: "install",
     number: "01",
-    title: "Install the ZUNO App",
-    shortTitle: "Install App",
-    description: "Download the ZUNO Customer App on Android or iOS.",
+    title: "Get the App",
+    shortTitle: "Get App",
+    description: "Install ZUNO on your phone.",
     details:
       "Get started in seconds. Browse neighborhood kirana stores, fresh vegetable vendors, and daily essentials right from your smartphone.",
     badge: "Quick Onboarding",
@@ -44,16 +44,16 @@ const STAGES: StageStep[] = [
   {
     id: "order",
     number: "02",
-    title: "Order from local shops",
-    shortTitle: "Order Locally",
-    description: "Browse nearby shops, add your favourite products to the cart, and place your order.",
+    title: "Explore Essentials",
+    shortTitle: "Essentials",
+    description: "Find everyday essentials in the app.",
     details:
       "Explore verified merchant inventories from trusted neighborhood stores. Add fresh vegetables, dairy, pulses, and pantry essentials directly to your cart at authentic store prices.",
     badge: "Live Merchant Catalog",
     image: "/images/step-2-order.jpg",
     alt: "Smartphone shopping screen showing Renukoot Central stores with floating cart preview and grocery basket",
-    actionLabel: "Explore Local Shops",
-    actionHref: "/shops",
+    actionLabel: "Explore Categories",
+    actionHref: "/categories",
     highlights: [
       "Gupta Kirana, Fresh Mart & Sharma General Store",
       "Direct from store shelves with transparent pricing",
@@ -64,12 +64,12 @@ const STAGES: StageStep[] = [
   {
     id: "track",
     number: "03",
-    title: "Track your delivery",
-    shortTitle: "Track Delivery",
-    description: "Your order is prepared by the shop and delivered by a local rider. Track live on the app.",
+    title: "Track Delivery",
+    shortTitle: "Track",
+    description: "Follow your order in the app.",
     details:
-      "Stay informed at every milestone. Watch your order progress seamlessly from shop packing to doorstep arrival with live rider route coordinates.",
-    badge: "Live Milestones",
+      "Stay informed at every milestone. Watch your order progress seamlessly from shop packing to doorstep arrival.",
+    badge: "Order Status",
     image: "/images/step-3-track.jpg",
     alt: "Delivery rider in green ZUNO jacket on scooter with live milestone status timeline",
     actionLabel: "Check Service Area",
@@ -84,12 +84,12 @@ const STAGES: StageStep[] = [
   {
     id: "enjoy",
     number: "04",
-    title: "Receive & enjoy",
-    shortTitle: "Receive & Enjoy",
-    description: "Get fresh, quality products at your doorstep and enjoy hassle-free shopping.",
+    title: "Receive Your Order",
+    shortTitle: "Receive",
+    description: "Get your essentials at your doorstep.",
     details:
       "Unpack hand-picked fresh harvest and daily staples delivered safely to your home. Enjoy supporting independent neighborhood stores while saving valuable time.",
-    badge: "Fresh & Guaranteed",
+    badge: "Delivered Fresh",
     image: "/images/step-4-enjoy.jpg",
     alt: "Smiling customer unpacking fresh bell pepper and vegetables from ZUNO bag at home",
     actionLabel: "Learn About ZUNO",
@@ -166,9 +166,9 @@ export function HowZunoWorks() {
     <section
       ref={containerRef}
       aria-label="How ZUNO Works"
-      className="py-12 sm:py-16 lg:py-20 bg-white relative overflow-hidden"
+      className="py-6 sm:py-10 md:py-12 lg:py-20 bg-white relative overflow-hidden"
     >
-      {/* Hardware-accelerated CSS Keyframes for buttery-smooth 60fps linear progress bar */}
+      {/* Hardware-accelerated CSS Keyframes for linear progress bar */}
       <style>{`
         @keyframes zunoStageProgress {
           0% {
@@ -182,34 +182,34 @@ export function HowZunoWorks() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* =========================================================================
-            SECTION HEADER (Exact match with reference mockup)
+            SECTION HEADER
             ========================================================================= */}
-        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-3.5 sm:mb-6 md:mb-7 lg:mb-12">
           {/* Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF4E5] text-[#0F5D3A] text-xs font-black uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#EAF4E5] text-[#0F5D3A] text-[10px] sm:text-xs font-black uppercase tracking-wider mb-1.5 sm:mb-3">
             <span>SIMPLE HYPERLOCAL FLOW</span>
           </div>
 
           {/* Heading */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#17231D] tracking-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#17231D] tracking-tight">
             How <span className="text-[#0F5D3A]">ZUNO</span> Works
           </h2>
 
           {/* Subtitle */}
-          <p className="mt-3 text-sm sm:text-base text-[#55695D] leading-relaxed">
-            From app install to fresh groceries at your doorstep — in just a few simple steps.
+          <p className="mt-1 sm:mt-2.5 text-xs sm:text-base text-[#55695D] leading-relaxed">
+            From app install to fresh essentials at your doorstep — in 4 simple steps.
           </p>
         </div>
 
         {/* =========================================================================
-            INTERACTIVE STEP CONTROLS (Pills with synced progress bars)
+            INTERACTIVE STEP CONTROLS (Pills with synced progress bars) - Desktop only
             ========================================================================= */}
-        <div className="mb-8 lg:mb-10 max-w-3xl mx-auto">
+        <div className="hidden md:block mb-5 md:mb-6 lg:mb-10 max-w-3xl mx-auto">
           {/* Step Pill Selectors (Tablist) */}
           <div
             role="tablist"
             aria-label="How ZUNO works step selector"
-            className="flex items-center justify-between p-1.5 rounded-2xl bg-[#F8FAF6] border border-[#EAEFEA] gap-1 sm:gap-2"
+            className="flex items-center justify-between p-1 sm:p-1.5 rounded-xl sm:rounded-2xl bg-[#F8FAF6] border border-[#EAEFEA] gap-1 sm:gap-2"
           >
             {STAGES.map((step, idx) => {
               const isActive = activeStep === idx;
@@ -223,16 +223,16 @@ export function HowZunoWorks() {
                   tabIndex={isActive ? 0 : -1}
                   onClick={() => goToStep(idx)}
                   onKeyDown={(e) => handleKeyDown(e, idx)}
-                  className={`relative flex-1 flex flex-col items-center justify-between pt-2 pb-1.5 px-2 sm:px-3 rounded-xl text-xs font-extrabold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F5D3A] overflow-hidden ${
+                  className={`relative flex-1 flex flex-col items-center justify-between pt-1.5 pb-1 sm:pt-2 sm:pb-1.5 px-1 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-extrabold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F5D3A] overflow-hidden min-h-[44px] ${
                     isActive
-                      ? "bg-[#0F5D3A] text-white shadow-md shadow-[#0F5D3A]/20 scale-[1.02]"
+                      ? "bg-[#0F5D3A] text-white shadow-md shadow-[#0F5D3A]/20 scale-[1.01]"
                       : "text-[#55695D] hover:text-[#17231D] hover:bg-white/70"
                   }`}
                 >
                   {/* Pill label & icon */}
-                  <div className="flex items-center justify-center gap-1.5 sm:gap-2 w-full mb-1.5">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 w-full mb-1">
                     <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-black shrink-0 ${
                         isActive
                           ? "bg-white text-[#0F5D3A]"
                           : "bg-[#EAF4E5] text-[#0F5D3A]"
@@ -241,11 +241,11 @@ export function HowZunoWorks() {
                       {step.number}
                     </span>
                     <span className="hidden sm:inline truncate">{step.shortTitle}</span>
-                    <span className="hidden min-[380px]:inline sm:hidden text-[11px] truncate">Step {step.number}</span>
+                    <span className="inline sm:hidden text-[9px] truncate">{step.shortTitle}</span>
                   </div>
 
                   {/* Bottom progress bar line with CSS GPU acceleration */}
-                  <div className="w-full h-1 rounded-full overflow-hidden bg-black/10">
+                  <div className="w-full h-0.5 sm:h-1 rounded-full overflow-hidden bg-black/10">
                     {isActive ? (
                       <div
                         key={`active-progress-${activeStep}`}
@@ -267,15 +267,118 @@ export function HowZunoWorks() {
         </div>
 
         {/* =========================================================================
-            CONNECTED 4-STAGE PANORAMA (Exact layout from reference mockup!)
+            MOBILE VIEW (md:hidden): Compact Active Step Card with Touch Navigation
+            ========================================================================= */}
+        <div
+          className="md:hidden relative"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="rounded-2xl bg-white border border-[#22A06B]/40 p-3.5 shadow-md shadow-[#0F5D3A]/10">
+            {/* Header info */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-full bg-[#0F5D3A] text-white flex items-center justify-center text-xs font-black">
+                  {STAGES[activeStep].number}
+                </span>
+                <span className="text-xs font-bold text-[#55695D]">
+                  Step {activeStep + 1} of {STAGES.length}
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#EAF4E5] text-[#0F5D3A] text-[10px] font-bold">
+                {STAGES[activeStep].badge}
+              </span>
+            </div>
+
+            {/* Title & Description */}
+            <h3 className="font-black text-base text-[#17231D]">
+              {STAGES[activeStep].title}
+            </h3>
+            <p className="mt-1 text-xs text-[#55695D] leading-relaxed">
+              {STAGES[activeStep].description}
+            </p>
+
+            {/* Clear, tall image container (aspect 4/5 matching exact image resolution) */}
+            <div className="mt-3 relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-[#F9FAF8] border border-[#EAEFEA]">
+              <Image
+                src={STAGES[activeStep].image}
+                alt={STAGES[activeStep].alt}
+                fill
+                unoptimized
+                priority
+                className="object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[11px] font-bold text-white drop-shadow">
+                <span className="bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded">
+                  {STAGES[activeStep].badge}
+                </span>
+                <span className="bg-[#0F5D3A]/90 backdrop-blur-xs px-2 py-0.5 rounded text-[10px]">
+                  {STAGES[activeStep].stats.value}
+                </span>
+              </div>
+            </div>
+
+            {/* Step Controls: Prev/Next & Dots */}
+            <div className="mt-3 pt-2.5 border-t border-[#EAEFEA] flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => goToStep(activeStep - 1)}
+                disabled={activeStep === 0}
+                aria-label="Previous step"
+                className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold transition min-h-[44px] min-w-[44px] ${
+                  activeStep === 0
+                    ? "text-[#C2CFC6] cursor-not-allowed bg-[#F8FAF6]"
+                    : "text-[#0F5D3A] bg-[#EAF4E5] hover:bg-[#D5E8CE]"
+                }`}
+              >
+                ←
+              </button>
+
+              {/* Dots */}
+              <div className="flex items-center gap-1.5">
+                {STAGES.map((s, idx) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => goToStep(idx)}
+                    aria-label={`Go to step ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all ${
+                      activeStep === idx
+                        ? "w-5 bg-[#0F5D3A]"
+                        : "w-2 bg-[#D5E8CE] hover:bg-[#A7D56B]"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => goToStep(activeStep + 1)}
+                disabled={activeStep === STAGES.length - 1}
+                aria-label="Next step"
+                className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold transition min-h-[44px] min-w-[44px] ${
+                  activeStep === STAGES.length - 1
+                    ? "text-[#C2CFC6] cursor-not-allowed bg-[#F8FAF6]"
+                    : "text-[#0F5D3A] bg-[#EAF4E5] hover:bg-[#D5E8CE]"
+                }`}
+              >
+                →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            DESKTOP VIEW (hidden md:block): 4-Stage Panorama Grid
             ========================================================================= */}
         <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="relative"
+          className="hidden md:block relative"
         >
           {/* 4 Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-5 relative">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 relative">
             {STAGES.map((step, idx) => {
               const isActive = activeStep === idx;
               return (
@@ -292,7 +395,7 @@ export function HowZunoWorks() {
                           goToStep(idx);
                         }
                       }}
-                      className={`relative flex-1 flex flex-col justify-between rounded-2xl lg:rounded-3xl bg-white border p-4 sm:p-5 transition-all duration-500 cursor-pointer overflow-hidden ${
+                      className={`relative flex-1 flex flex-col justify-between rounded-2xl lg:rounded-3xl bg-white border p-3.5 sm:p-4 md:p-4.5 lg:p-5 transition-all duration-500 cursor-pointer overflow-hidden ${
                         isActive
                           ? "border-[#22A06B] shadow-xl shadow-[#0F5D3A]/15 ring-2 ring-[#22A06B]/30 -translate-y-1.5"
                           : "border-[#EAEFEA] shadow-sm hover:border-[#22A06B]/50 hover:shadow-md hover:-translate-y-0.5 opacity-90 hover:opacity-100"
@@ -301,12 +404,12 @@ export function HowZunoWorks() {
                       {/* Top Header Row of Card */}
                       <div>
                         {/* Number badge and status indicator */}
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm transition-all duration-300 ${
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs sm:text-sm transition-all duration-300 ${
                                 isActive
-                                  ? "bg-[#22A06B] text-white shadow-md shadow-[#22A06B]/30 scale-105"
+                              ? "bg-[#22A06B] text-white shadow-md shadow-[#22A06B]/30 scale-105"
                                   : "bg-[#EAF4E5] text-[#0F5D3A]"
                               }`}
                             >
@@ -328,7 +431,7 @@ export function HowZunoWorks() {
 
                         {/* Title */}
                         <h3
-                          className={`font-black text-base sm:text-lg leading-snug transition-colors duration-200 ${
+                          className={`font-black text-sm sm:text-base lg:text-lg leading-snug transition-colors duration-200 ${
                             isActive ? "text-[#0F5D3A]" : "text-[#17231D]"
                           }`}
                         >
@@ -336,13 +439,13 @@ export function HowZunoWorks() {
                         </h3>
 
                         {/* Short Description */}
-                        <p className="mt-1.5 text-xs text-[#55695D] leading-relaxed line-clamp-3">
+                        <p className="mt-1 text-xs text-[#55695D] leading-relaxed line-clamp-3">
                           {step.description}
                         </p>
                       </div>
 
                       {/* Visual Artwork Container */}
-                      <div className="mt-4 relative w-full aspect-[4/5] rounded-xl lg:rounded-2xl overflow-hidden bg-[#F9FAF8] border border-[#EAEFEA] group/art">
+                      <div className="mt-3 sm:mt-4 relative w-full aspect-[4/5] md:aspect-[4/3] lg:aspect-[4/5] rounded-xl lg:rounded-2xl overflow-hidden bg-[#F9FAF8] border border-[#EAEFEA] group/art">
                         <Image
                           src={step.image}
                           alt={step.alt}

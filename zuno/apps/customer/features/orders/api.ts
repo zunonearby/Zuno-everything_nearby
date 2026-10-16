@@ -677,3 +677,31 @@ export async function getCustomerOrders(): Promise<CustomerOrder[]> {
     shop_name: o.shopName,
   }));
 }
+
+export async function cancelCustomerOrder(orderId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
+      return { success: false, message: "User session not found." };
+    }
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: OrderStatus.CANCELLED,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId)
+      .eq("customer_id", userData.user.id)
+      .eq("status", OrderStatus.PLACED);
+
+    if (error) {
+      return { success: false, message: error.message || "Failed to cancel order." };
+    }
+
+    return { success: true, message: "Order cancelled successfully." };
+  } catch (err: any) {
+    return { success: false, message: err?.message || "Failed to cancel order." };
+  }
+}
+

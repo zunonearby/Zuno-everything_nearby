@@ -261,11 +261,14 @@ export async function acceptDeliveryRequest(deliveryId: string): Promise<{ succe
   try {
     const { data, error } = await supabase.rpc("claim_delivery_assignment", {
       p_delivery_id: deliveryId,
-      p_partner_id: partner.id,
     });
 
-    if (!error && data && data.success) {
-      return { success: true, message: data.message || "Delivery request accepted!" };
+    if (!error && data) {
+      if (data.success) {
+        return { success: true, message: data.message || "Delivery request accepted!" };
+      } else {
+        return { success: false, message: data.message || "Unable to claim delivery request." };
+      }
     }
   } catch {
     // fallback
