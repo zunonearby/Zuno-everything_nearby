@@ -67,9 +67,9 @@ export async function getShopApplicationsAction(
       .order("created_at", { ascending: false });
 
     if (filter === "PENDING") {
-      query = query.or("approval_status.eq.PENDING,is_approved.eq.false");
+      query = query.eq("approval_status", "PENDING").eq("is_approved", false);
     } else if (filter === "APPROVED") {
-      query = query.or("approval_status.eq.APPROVED,is_approved.eq.true");
+      query = query.eq("approval_status", "APPROVED").eq("is_approved", true);
     } else if (filter === "REJECTED") {
       query = query.eq("approval_status", "REJECTED");
     }
@@ -87,9 +87,9 @@ export async function getShopApplicationsAction(
         .order("created_at", { ascending: false });
 
       if (filter === "PENDING") {
-        fallbackQuery = fallbackQuery.or("approval_status.eq.PENDING,is_approved.eq.false");
+        fallbackQuery = fallbackQuery.eq("approval_status", "PENDING").eq("is_approved", false);
       } else if (filter === "APPROVED") {
-        fallbackQuery = fallbackQuery.or("approval_status.eq.APPROVED,is_approved.eq.true");
+        fallbackQuery = fallbackQuery.eq("approval_status", "APPROVED").eq("is_approved", true);
       } else if (filter === "REJECTED") {
         fallbackQuery = fallbackQuery.eq("approval_status", "REJECTED");
       }

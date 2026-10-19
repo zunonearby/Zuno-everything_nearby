@@ -50,14 +50,14 @@ export default function ShopRegisterPage() {
     try {
       await registerShopkeeper({
         ownerFullName: ownerFullName.trim(),
-        phone: phone.replace(/\D/g, ""),
+        phone: phone.replace(/\D/g, "").slice(-10),
         shopName: shopName.trim(),
         description: description.trim(),
         addressLine: addressLine.trim(),
         locality: locality.trim(),
         pincode: pincode.trim(),
       });
-      router.push(`/status?registered=true&phone=${phone.replace(/\D/g, "")}`);
+      router.push(`/status?registered=true&phone=${phone.replace(/\D/g, "").slice(-10)}`);
     } catch (err: any) {
       alert(err.message || "Failed to register shop.");
     } finally {

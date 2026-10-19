@@ -1,5 +1,5 @@
 import { createClient } from "../../lib/supabase";
-import { UserRole } from "@zuno/types";
+import { normalizePhoneE164 } from "@zuno/validation";
 
 export interface ShopkeeperAccount {
   id: string;
@@ -23,24 +23,99 @@ export interface RegisterShopInput {
   pincode: string;
 }
 
-export async function requestShopkeeperOtp(phone: string) {
+export async function requestShopkeeperOtp(phone: string): Promise<{ success: boolean; message: string }> {
   const supabase = createClient();
-  const formattedPhone = phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`;
+  const clean10 = phone.replace(/\D/g, "").slice(-10);
+  if (clean10.length < 10) {
+    throw new Error("Please enter a valid 10-digit mobile number.");
+  }
+  const formattedPhone = normalizePhoneE164(clean10);
+
   try {
-    const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
-    if (error) {
-      console.warn("[ShopAuth] OTP Notice:", error.message);
+    const { error: phoneErr } = await supabase.auth.signInWithOtp({
+      phone: formattedPhone,
+    });
+
+    if (phoneErr) {
+      const errMsg = phoneErr.message || "";
+      const errCode = (phoneErr as any).code || (phoneErr as any).error_code;
+      if (
+        errMsg.toLowerCase().includes("unsupported phone provider") ||
+        errCode === "phone_provider_disabled" ||
+        phoneErr.status === 400
+      ) {
+        throw new Error(
+          "Supabase SMS phone provider is currently disabled. Please enable the Phone provider in your Supabase Dashboard (under Authentication > Providers > Phone) or configure a Test Phone Number (e.g. +918887602317 with code 123456)."
+        );
+      }
+      throw new Error(errMsg || "Failed to send OTP.");
     }
-    return { success: true, message: "OTP sent to your mobile number." };
+
+    return { success: true, message: `OTP sent successfully to +91 ${clean10}.` };
   } catch (err: any) {
-    return { success: true, message: "OTP sent to your mobile number." };
+    throw new Error(err?.message || "Failed to send OTP.");
+  }
+}
+
+export async function verifyShopkeeperOtp(
+  phone: string,
+  token: string
+): Promise<{ success: boolean; user?: any; session?: any; error?: string }> {
+  const supabase = createClient();
+  const clean10 = phone.replace(/\D/g, "").slice(-10);
+  const formattedPhone = normalizePhoneE164(clean10);
+  const cleanToken = token.trim();
+
+  if (!cleanToken || cleanToken.length < 6) {
+    return {
+      success: false,
+      error: "Please enter the complete 6-digit OTP.",
+    };
+  }
+
+  try {
+    const res = await supabase.auth.verifyOtp({
+      phone: formattedPhone,
+      token: cleanToken,
+      type: "sms",
+    });
+
+    if (res.error || !res.data?.user) {
+      const errMsg = res.error?.message || "";
+      const errCode = (res.error as any)?.code || (res.error as any)?.error_code;
+      if (
+        errMsg.toLowerCase().includes("token has expired") ||
+        errCode === "otp_expired" ||
+        res.error?.status === 403
+      ) {
+        return {
+          success: false,
+          error: "Verification code has expired or is invalid. Please request a fresh OTP.",
+        };
+      }
+      return {
+        success: false,
+        error: errMsg || "Invalid or expired OTP. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      user: res.data.user,
+      session: res.data.session,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || "Failed to verify OTP.",
+    };
   }
 }
 
 export async function registerShopkeeper(input: RegisterShopInput): Promise<ShopkeeperAccount> {
   const supabase = createClient();
-  const cleanPhone = input.phone.replace(/\D/g, "");
-  const formattedPhone = cleanPhone.startsWith("+") ? cleanPhone : `+91${cleanPhone}`;
+  const clean10 = input.phone.replace(/\D/g, "").slice(-10);
+  const formattedPhone = normalizePhoneE164(clean10);
 
   // Call the atomic registration RPC (SECURITY DEFINER)
   const { data: rpcRes, error: rpcErr } = await supabase.rpc("register_shop_application", {
@@ -77,14 +152,14 @@ export async function registerShopkeeper(input: RegisterShopInput): Promise<Shop
 
 export async function getShopByPhone(phone: string): Promise<ShopkeeperAccount | null> {
   const supabase = createClient();
-  const clean = phone.replace(/\D/g, "");
-  const formatted = clean.startsWith("+") ? clean : `+91${clean}`;
+  const clean10 = phone.replace(/\D/g, "").slice(-10);
+  const formattedPhone = normalizePhoneE164(clean10);
 
   try {
     const { data: shop, error } = await supabase
       .from("shops")
       .select("*")
-      .or(`phone.eq.${formatted},phone.eq.${clean}`)
+      .or(`phone.eq.${formattedPhone},phone.eq.${clean10}`)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

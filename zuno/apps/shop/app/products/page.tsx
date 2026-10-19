@@ -1,4 +1,8 @@
-// TODO: shop's product list (features/products)
-export default function ProductsPage() {
-  return <div>Products</div>;
+import React from "react";
+import { getShopProductsAction } from "../../features/products/actions";
+import ProductsClient from "./ProductsClient";
+
+export default async function ProductsPage() {
+  const initialData = await getShopProductsAction();
+  return <ProductsClient initialData={initialData} />;
 }

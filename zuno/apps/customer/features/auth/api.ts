@@ -2,6 +2,7 @@ import { supabase } from "../../lib/supabase";
 import { normalizePhoneE164, rawPhoneSchema } from "@zuno/validation";
 import { trackEvent } from "../../lib/analytics";
 import { AnalyticsEvent } from "@zuno/analytics";
+import { isDevMockAuthEnabled } from "@zuno/config";
 
 /**
  * Requests a phone OTP via Supabase Auth.
@@ -21,8 +22,21 @@ export async function requestPhoneOtp(
 
   trackEvent(AnalyticsEvent.OTP_REQUESTED);
 
-  // OTP Bypass for dev/testing
-  console.info("[AuthAPI] OTP request bypassed for dev testing.");
+  // Requirement 2 & 9: Only permit in non-production when explicitly enabled
+  if (isDevMockAuthEnabled()) {
+    console.info("[AuthAPI] Dev mock auth mode: OTP request simulated for local testing.");
+    return {
+      success: true,
+      formattedPhone: e164Phone,
+      message: "Development Mock: OTP sent successfully (No SMS required)",
+    };
+  }
+
+  const { error } = await supabase.auth.signInWithOtp({ phone: e164Phone });
+  if (error) {
+    throw new Error(error.message || "Failed to send verification code.");
+  }
+
   return {
     success: true,
     formattedPhone: e164Phone,
@@ -44,13 +58,32 @@ export async function verifyPhoneOtp(
     throw new Error("OTP must be a valid 6-digit code");
   }
 
-  // OTP Bypass for dev/testing
-  console.info("[AuthAPI] OTP verification bypassed for dev testing.");
+  // Requirement 2 & 9: Only permit in non-production when explicitly enabled
+  if (isDevMockAuthEnabled()) {
+    console.info("[AuthAPI] Dev mock auth mode: OTP verification simulated for local testing.");
+    trackEvent(AnalyticsEvent.OTP_VERIFICATION_SUCCEEDED);
+    return {
+      success: true,
+      session: { access_token: "dev-session-token", user: { id: "dev-user-id", phone: e164Phone } },
+      user: { id: "dev-user-id", phone: e164Phone },
+    };
+  }
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone: e164Phone,
+    token: otpCode.trim(),
+    type: "sms",
+  });
+
+  if (error || !data.user) {
+    throw new Error(error?.message || "Invalid or expired verification code");
+  }
+
   trackEvent(AnalyticsEvent.OTP_VERIFICATION_SUCCEEDED);
   return {
     success: true,
-    session: { access_token: "dev-session-token", user: { id: "dev-user-id", phone: e164Phone } },
-    user: { id: "dev-user-id", phone: e164Phone },
+    session: data.session,
+    user: data.user,
   };
 }
 

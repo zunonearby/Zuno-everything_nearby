@@ -1,4 +1,8 @@
-// TODO: shop profile management (features/shop)
-export default function ShopProfilePage() {
-  return <div>Shop profile</div>;
+import React from "react";
+import { getShopProfileAction } from "../../features/shop/actions";
+import ShopProfileClient from "./ShopProfileClient";
+
+export default async function ShopProfilePage() {
+  const initialData = await getShopProfileAction();
+  return <ShopProfileClient initialData={initialData} />;
 }

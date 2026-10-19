@@ -1,4 +1,10 @@
-// TODO: platform_settings management (features/settings)
-export default function SettingsPage() {
-  return <div>Settings</div>;
+import React from "react";
+import { getPlatformSettingsAction } from "../../features/settings/actions";
+import SettingsClient from "./SettingsClient";
+import { requireAdminPage } from "../../lib/authGuard";
+
+export default async function SettingsPage() {
+  await requireAdminPage();
+  const res = await getPlatformSettingsAction();
+  return <SettingsClient initialConfig={res.data} initialError={res.error} />;
 }

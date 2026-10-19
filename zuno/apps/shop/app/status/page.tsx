@@ -87,22 +87,51 @@ export default function ShopStatusPage() {
 
         {status === "APPROVED" || shopkeeper?.isApproved ? (
           <Link
-            href="/dashboard"
+            href={shopkeeper?.phone ? `/dashboard?phone=${shopkeeper.phone.replace(/\D/g, "").slice(-10)}` : "/dashboard"}
             className="block w-full py-3 bg-[#0F5D3A] hover:bg-[#0c4b2e] text-white rounded-xl text-sm font-extrabold transition shadow-sm"
           >
             Enter Shopkeeper Dashboard →
           </Link>
+        ) : status === "REJECTED" ? (
+          <div className="space-y-3">
+            <p className="text-[11px] text-gray-500 leading-relaxed">
+              Your application was not approved by ZUNO Administration. You may submit a new application with verified details or contact local support.
+            </p>
+            <div className="space-y-2">
+              <Link
+                href="/register"
+                className="block w-full py-2.5 bg-[#0F5D3A] hover:bg-[#0c4b2e] text-white rounded-xl text-xs font-bold transition shadow-sm"
+              >
+                Submit New Application →
+              </Link>
+              <Link
+                href="/login"
+                className="block w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition"
+              >
+                Back to Sign In
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-3">
             <p className="text-[11px] text-gray-400">
               New shopkeeper registrations default to PENDING status and require Admin approval before live order processing.
             </p>
-            <Link
-              href="/login"
-              className="block w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition"
-            >
-              Back to Login / Sign Out
-            </Link>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="block w-full py-2.5 bg-[#EAF4E5] hover:bg-[#d5ebd0] text-[#0F5D3A] border border-[#0F5D3A]/20 rounded-xl text-xs font-bold transition"
+              >
+                🔄 Check Latest Approval Status
+              </button>
+              <Link
+                href="/login"
+                className="block w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition"
+              >
+                Back to Login / Sign Out
+              </Link>
+            </div>
           </div>
         )}
       </div>

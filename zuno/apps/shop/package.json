@@ -18,6 +18,7 @@
     "@zuno/ui": "workspace:*",
     "@zuno/utils": "workspace:*",
     "@zuno/validation": "workspace:*",
+    "lucide-react": "^1.59.0",
     "next": "^14.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",

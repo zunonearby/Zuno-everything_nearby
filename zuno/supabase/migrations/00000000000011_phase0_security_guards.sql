@@ -136,13 +136,21 @@ returns trigger as $$
 begin
   if (OLD.is_approved is distinct from NEW.is_approved or OLD.approval_status is distinct from NEW.approval_status) then
     if not public.is_admin_or_super(auth.uid()) then
-      raise exception 'Only platform administrators can modify shop approval status.';
+      if current_user in ('postgres', 'service_role') or session_user in ('postgres', 'service_role') then
+        null; -- Authorized execution via database admin / SECURITY DEFINER approval RPC
+      else
+        raise exception 'Only platform administrators can modify shop approval status.';
+      end if;
     end if;
   end if;
 
   if (OLD.owner_id is distinct from NEW.owner_id) then
     if not public.is_admin_or_super(auth.uid()) then
-      raise exception 'Shop ownership cannot be transferred without administrator approval.';
+      if current_user in ('postgres', 'service_role') or session_user in ('postgres', 'service_role') then
+        null; -- Authorized execution via database admin / SECURITY DEFINER approval RPC
+      else
+        raise exception 'Shop ownership cannot be transferred without administrator approval.';
+      end if;
     end if;
   end if;
 
@@ -296,9 +304,18 @@ declare
   v_shop record;
   v_is_approved boolean := (p_status = 'APPROVED');
 begin
+  if p_status not in ('APPROVED', 'REJECTED', 'SUSPENDED') then
+    return jsonb_build_object('success', false, 'error', 'Invalid status: ' || coalesce(p_status, 'null'));
+  end if;
+
   select * into v_shop from public.shops where id = p_shop_id;
   if not found then
     return jsonb_build_object('success', false, 'error', 'Shop record not found.');
+  end if;
+
+  -- Anti-self-approval invariant: Shop owner cannot approve their own shop
+  if auth.uid() is not null and v_shop.owner_id = auth.uid() then
+    return jsonb_build_object('success', false, 'error', 'Security Violation: Shop owners cannot alter their own approval status.');
   end if;
 
   update public.shops

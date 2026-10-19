@@ -59,18 +59,41 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  let isAuthenticated = Boolean(session);
+
+  // Requirement 2 & 9: In non-production only, support development mock session cookie
+  if (!isAuthenticated && process.env.NODE_ENV !== "production") {
+    const { isDevMockAuthEnabled, DEV_MOCK_AUTH_COOKIE } = await import("@zuno/config");
+    if (isDevMockAuthEnabled()) {
+      const rawCookie = request.cookies.get(DEV_MOCK_AUTH_COOKIE)?.value;
+      if (rawCookie) {
+        try {
+          const decoded = rawCookie.startsWith("%") ? decodeURIComponent(rawCookie) : rawCookie;
+          const parsed = JSON.parse(decoded);
+          if (parsed?.userId && parsed?.shopId) {
+            isAuthenticated = true;
+          }
+        } catch {}
+      }
+    }
+  }
+
   const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
   // If not logged in and requesting a protected dashboard route, redirect to /login
-  if (!session && !isPublic) {
+  if (!isAuthenticated && !isPublic) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
+    const phone = request.nextUrl.searchParams.get("phone");
+    if (phone) {
+      loginUrl.searchParams.set("phone", phone);
+    }
     return NextResponse.redirect(loginUrl);
   }
 
-  // If logged in and visiting /login, redirect to root
-  if (session && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+  // If logged in and visiting /login, redirect to dashboard or root
+  if (isAuthenticated && pathname === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;
